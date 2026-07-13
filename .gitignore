@@ -1,0 +1,51 @@
+# .gitignore - Aria AI Real Estate Agent
+
+# Environment Files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# n8n Local Execution Logs / Backups
+.n8n/
+n8n-debug.log
+n8n-error.log
+
+# Dependency Directories
+node_modules/
+jspm_packages/
+.pnp/
+.pnp.js
+
+# Testing / Coverage
+coverage/
+.nyc_output/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Project Scratch Directories
+scratch/
+tmp/
+temp/
+build/
+dist/
+
+# OS-specific files
+Desktop.ini
+ehthumbs.db
+
+# Backup files
+*.bak
+*.swp
+*.swo

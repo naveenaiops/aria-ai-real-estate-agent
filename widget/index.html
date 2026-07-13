@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluestone Estates — Luxury Homes & Apartments</title>
+  <meta name="description" content="Explore ultra-luxury real estate, villas, and apartments. Chat with Aria, our autonomous AI Property Consultant, to find your perfect home.">
+  <link rel="stylesheet" href="style.css">
+  <!-- Modern Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Demo landing page for Bluestone Estates -->
+  <main class="page-demo">
+    <div class="logo">Bluestone Estates</div>
+    <h1>Discover Your Perfect Luxury Sanctuary</h1>
+    <p class="subtitle">Experience architectural masterpieces and bespoke estates tailored to your refined lifestyle.</p>
+    <div class="action-card">
+      <p class="action-card__text">Ready to begin your property search? Open our chat assistant below to explore premium listings, evaluate market values, and schedule a site visit instantly.</p>
+      <button type="button" class="btn-primary" onclick="openChat()">Consult Aria AI</button>
+    </div>
+  </main>
+
+  <!-- Floating Chat Bubble Trigger -->
+  <button
+    type="button"
+    id="chat-button"
+    class="chat-bubble"
+    aria-label="Open property chat"
+    aria-expanded="false"
+    aria-controls="chat-window"
+  >
+    <svg class="chat-bubble__icon chat-bubble__icon--open" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+    <svg class="chat-bubble__icon chat-bubble__icon--close" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </svg>
+  </button>
+
+  <!-- Backdrop for overlay dismissal -->
+  <div id="chat-backdrop" class="chat-backdrop" aria-hidden="true"></div>
+
+  <!-- Chat Widget Panel -->
+  <aside
+    id="chat-window"
+    class="chat-widget"
+    role="dialog"
+    aria-labelledby="chat-title"
+    aria-hidden="true"
+  >
+    <!-- Header -->
+    <header id="chat-header" class="chat-widget__header">
+      <div class="chat-widget__header-top">
+        <div class="chat-widget__identity">
+          <div class="chat-widget__avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+          </div>
+          <div class="chat-widget__meta">
+            <h2 id="chat-title" class="chat-widget__title">Aria AI</h2>
+            <p class="chat-widget__subtitle">Bluestone Estates Advisor</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="close-chat"
+          class="chat-widget__close"
+          aria-label="Close chat"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+      <p class="chat-widget__status">
+        <span class="online-indicator" aria-hidden="true"></span>
+        <span>Aria is online — active consultation</span>
+      </p>
+    </header>
+
+    <!-- Chat Messages Body -->
+    <section
+      id="chat-body"
+      class="chat-widget__messages"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
+      <div class="welcome-card">
+        <div class="welcome-card__avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <h3 class="welcome-card__title">Aria AI Consultant</h3>
+        <p class="welcome-card__text">
+          I am your private real estate assistant. Ask me to find properties in specific areas, calculate purchase budgets, or book physical site visits.
+        </p>
+      </div>
+
+      <!-- Quick Action Options -->
+      <div id="quick-actions" class="quick-actions" role="group" aria-label="Quick actions">
+        <button type="button" class="quick-actions__chip" data-message="I am looking for luxury villas in Whitefield">
+          🔍 Find Luxury Villas
+        </button>
+        <button type="button" class="quick-actions__chip" data-message="What is the price range of premium apartments in Sarjapur?">
+          📈 Check Price Ranges
+        </button>
+        <button type="button" class="quick-actions__chip" data-message="I would like to schedule a physical site visit tomorrow">
+          📅 Book Site Visit
+        </button>
+        <button type="button" class="quick-actions__chip" data-message="Can you connect me with a relationship manager?">
+          👤 Speak to an Agent
+        </button>
+      </div>
+
+      <!-- Welcome Message -->
+      <article class="message message--bot">
+        <div class="message__row">
+          <div class="message__avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+          </div>
+          <div class="message__content">
+            <span class="message__sender">Aria AI</span>
+            <div class="message__bubble">
+              <p>Welcome to Bluestone Estates! Tell me your preferred location, budget, or timeline, and I'll find the perfect match.</p>
+            </div>
+            <time class="message__time" datetime="2026-07-13T12:00">Just now</time>
+          </div>
+        </div>
+      </article>
+
+      <!-- Dynamic Typing Indicator -->
+      <div id="typing-indicator" class="typing-indicator" aria-hidden="true" hidden>
+        <div class="message__avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <div class="typing-indicator__bubble">
+          <span class="typing-indicator__label">Thinking</span>
+          <span class="typing-indicator__dot" aria-hidden="true"></span>
+          <span class="typing-indicator__dot" aria-hidden="true"></span>
+          <span class="typing-indicator__dot" aria-hidden="true"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Input Bar -->
+    <footer class="chat-widget__footer">
+      <form id="chat-form" class="chat-widget__form" autocomplete="off">
+        <div class="chat-widget__input-wrap">
+          <label for="chat-input" class="visually-hidden">Consult Aria AI</label>
+          <textarea
+            id="chat-input"
+            class="chat-widget__input"
+            name="message"
+            rows="1"
+            placeholder="Type area, budget, or timelines..."
+            aria-label="Property search input"
+          ></textarea>
+          <button
+            type="submit"
+            id="send-button"
+            class="chat-widget__send"
+            aria-label="Send message"
+            disabled
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3.4 20.4 21 12 3.4 3.6l-.9 7.3 11.5 1.1-11.5 1.1z"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </footer>
+  </aside>
+
+  <!-- Load Configuration & Client Script -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

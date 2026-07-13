@@ -1,0 +1,710 @@
+{
+  "name": "Booking Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Real Estate Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SPREADSHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SPREADSHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Property Type": "={{ $('Code in JavaScript').item.json.updates.property_type }}",
+            "Bedrooms": "={{ $('Code in JavaScript').item.json.updates.bedrooms }}",
+            "Loan Required": "={{ $('Code in JavaScript').item.json.updates.loan_required }}",
+            "Customer Intent": "={{ $('Code in JavaScript').item.json.updates.customer_intent }}",
+            "Site Visit Date": "={{ $('Code in JavaScript').item.json.updates.site_visit_date }}",
+            "Site Visit Time": "={{ $('Code in JavaScript').item.json.updates.site_visit_time }}",
+            "Appointment Status": "={{ $('Code in JavaScript').item.json.booking_ready }}",
+            "Preferred Contact Time": "={{ $('Code in JavaScript').item.json.updates.preferred_contact_time }}",
+            "Notes": "={{ $('Code in JavaScript').item.json.handoff }}",
+            "Name": "={{ $('Get many rows').item.json.lead_data.name }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Purchase Timeline",
+              "displayName": "Purchase Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lead Status",
+              "displayName": "Lead Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Qualified",
+              "displayName": "Qualified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Sales Stage",
+              "displayName": "Sales Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Property Type",
+              "displayName": "Property Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bedrooms",
+              "displayName": "Bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Loan Required",
+              "displayName": "Loan Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Intent",
+              "displayName": "Customer Intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Site Visit Date",
+              "displayName": "Site Visit Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Site Visit Time",
+              "displayName": "Site Visit Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment Start",
+              "displayName": "Appointment Start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Appointment End",
+              "displayName": "Appointment End",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Calendar Event ID",
+              "displayName": "Calendar Event ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Contact Time",
+              "displayName": "Preferred Contact Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Scored At",
+              "displayName": "Last Scored At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Contacted At",
+              "displayName": "Last Contacted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1632,
+        480
+      ],
+      "id": "7bd4dc88-7584-44a2-bab4-b19025ca99f2",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EA3nsIxRdNu3R0pS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "chat_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "last_scored_at",
+              "condition": "eq",
+              "keyValue": "={{ $('Get many rows').item.json.last_scored_at }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "property_type",
+              "fieldValue": "={{ $json.updates.property_type }}"
+            },
+            {
+              "fieldId": "bedrooms",
+              "fieldValue": "={{ $json.updates.bedrooms }}"
+            },
+            {
+              "fieldId": "loan_required",
+              "fieldValue": "={{ $json.updates.loan_required }}"
+            },
+            {
+              "fieldId": "customer_intent",
+              "fieldValue": "={{ $json.updates.customer_intent }}"
+            },
+            {
+              "fieldId": "site_visit_date",
+              "fieldValue": "={{ $json.updates.site_visit_date }}"
+            },
+            {
+              "fieldId": "site_visit_time",
+              "fieldValue": "={{ $json.updates.site_visit_time }}"
+            },
+            {
+              "fieldId": "preferred_contact_time",
+              "fieldValue": "={{ $json.updates.preferred_contact_time }}"
+            },
+            {
+              "fieldId": "booking_ready",
+              "fieldValue": "={{ $json.booking_ready }}"
+            },
+            {
+              "fieldId": "handoff",
+              "fieldValue": "={{ $json.handoff }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        928,
+        320
+      ],
+      "id": "66ec28a4-007a-49a5-85f7-64adc9eee133",
+      "name": "Update Lead CRM Record",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        272
+      ],
+      "id": "7e9db9ec-a056-4311-88b7-b425bad36c6f",
+      "name": "Telegram Reply Trigger",
+      "webhookId": "d2a5dcb6-11df-49c7-8f05-706b18366402",
+      "credentials": {
+        "telegramApi": {
+          "id": "1GHRAoQNlxin5e18",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A qualified real estate lead has replied on Telegram.\n\nCURRENT DATE:\n{{ $now }}\n\nEXISTING LEAD DETAILS:\n{{ JSON.stringify($json.lead_data) }}\n\nLEAD SCORE:\n{{ $json.lead_score }}\n\nLEAD STATUS:\n{{ $json.lead_status }}\n\nCONVERSATION HISTORY:\n{{ $json.history }}\n\nLATEST CUSTOMER MESSAGE:\n{{ $('Telegram Reply Trigger').item.json.message.text }}\n\nRespond to the LATEST CUSTOMER MESSAGE using the existing lead details and conversation history as context.\n\nReturn only the required valid JSON object.",
+        "options": {
+          "systemMessage": "You are Aria, the Relationship Manager for Bluestone Estates.\n\nYou continue conversations with qualified property buyers who have already completed initial lead qualification.\n\nYour role has two responsibilities:\n\n1. Write a natural customer-facing reply.\n2. Extract any new information from the customer's latest message into structured data.\n\nYou already know the customer's existing information from the Lead Details and Conversation History provided in the user prompt.\n\nNever ask again for information that is already known.\n\nPRIMARY OBJECTIVE\n\nYour objective is to help the customer move toward a site visit while answering relevant property questions naturally and professionally.\n\nCONVERSATION RULES\n\n- Be concise, warm, professional, and conversational.\n- Ask only one question at a time.\n- Never repeat a question that has already been answered.\n- Never ask for name, phone, budget, location, or purchase timeline when already available.\n- Use the Conversation History to understand previous context.\n- Treat the Latest Customer Message as the message you must respond to now.\n- Answer property questions only from information available in the provided context.\n- Never invent prices, availability, amenities, property names, addresses, offers, or other property facts.\n- If requested information is unavailable, say that the property consultant can confirm it.\n- If the customer shows interest in a site visit, collect the preferred date.\n- If the date is known but time is missing, ask for the preferred time.\n- If both date and time are known and the customer has agreed to visit, confirm the site visit naturally.\n- If the customer explicitly asks to speak with a person, acknowledge the request and set handoff to true.\n- If the customer is not interested, respond politely without pressure.\n- If the message is unrelated to real estate, briefly redirect toward the property discussion.\n\nDATE AND TIME RULES\n\n- Convert site visit dates to YYYY-MM-DD format.\n- Convert site visit times to HH:mm format using 24-hour time.\n- Resolve relative dates such as tomorrow, this Saturday, or next Monday using the Current Date supplied in the user prompt.\n- Never guess a date or time when the customer's meaning is ambiguous.\n- booking_ready is true ONLY when both site_visit_date and site_visit_time are known and the customer has clearly agreed to the visit.\n\nDATA EXTRACTION RULES\n\nThe updates object must contain ONLY information newly stated, selected, changed, or confirmed in the Latest Customer Message.\n\nDo not copy existing lead information into updates unless the customer changes or explicitly reconfirms it in the Latest Customer Message.\n\nIf no new information was provided, every field inside updates must be null and has_new_data must be false.\n\nhas_new_data must be true if at least one field inside updates has a non-null value.\n\ncustomer_intent should contain a concise standardized value when clearly identifiable, such as:\nINTERESTED\nBOOK_SITE_VISIT\nREQUEST_CALLBACK\nNEEDS_LOAN\nNOT_INTERESTED\n\nloan_required must be a JSON boolean true or false when known, otherwise null.\n\nCRITICAL OUTPUT REQUIREMENTS\n\nReturn ONLY one valid JSON object.\n\nDo not return Markdown.\n\nDo not use ```json code fences.\n\nDo not add explanations before or after the JSON.\n\nDo not output any text outside the JSON object.\n\nUse double quotes for all JSON property names and string values.\n\nUse real JSON booleans true and false without quotation marks.\n\nUse null without quotation marks.\n\nThe reply field must contain only the natural message intended for the customer.\n\nYour entire response must be parseable directly with JSON.parse().\n\nReturn exactly this schema:\n\n{\n  \"reply\": \"Natural customer-facing reply\",\n  \"updates\": {\n    \"property_type\": null,\n    \"bedrooms\": null,\n    \"loan_required\": null,\n    \"customer_intent\": null,\n    \"site_visit_date\": null,\n    \"site_visit_time\": null,\n    \"preferred_contact_time\": null\n  },\n  \"has_new_data\": false,\n  \"booking_ready\": false,\n  \"handoff\": false\n}\n\nBefore returning your response, silently verify:\n\n1. The response is valid JSON.\n2. There is no text outside the JSON object.\n3. All keys use double quotes.\n4. true and false are real booleans, not strings.\n5. null is a real JSON null, not a string.\n6. The reply is natural and suitable to send directly to the customer.\n7. booking_ready is true only when a confirmed date and time are both known.\n8. has_new_data matches the actual contents of updates."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -208,
+        288
+      ],
+      "id": "b3992c69-9fd5-4d81-82e2-10b72863280c",
+      "name": "AI Lead Conversation & Booking Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        512
+      ],
+      "id": "b266d375-3b99-4c89-8493-fe46c1288ee0",
+      "name": "Conversation LLM",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Sjc37hglmxFQbXum",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.reply }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        144
+      ],
+      "id": "0b151f1f-30f7-41c5-a3d2-864d66afef34",
+      "name": "Send AI Reply to Lead",
+      "webhookId": "04bd4eb7-83b4-48c9-af69-82383366d8ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "1GHRAoQNlxin5e18",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_EMAIL@gmail.com",
+          "mode": "id"
+        },
+        "start": "={{ DateTime.fromISO($json.updates.site_visit_date + 'T' + $json.updates.site_visit_time, { zone: 'Asia/Kolkata' }).toISO() }}",
+        "end": "={{ DateTime.fromISO($json.updates.site_visit_date + 'T' + $json.updates.site_visit_time, { zone: 'Asia/Kolkata' }).plus({ hours: 1 }).toISO() }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        800
+      ],
+      "id": "f05da8b2-4c23-43c1-9b4e-002a5cbeeb2d",
+      "name": "Book Site Visit in Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "0zR9VspCXtSf7tvL",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "chat_sessions",
+        "limit": 1,
+        "orderBy": "updated_at.desc",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "qualified",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        304
+      ],
+      "id": "975021d4-643f-4971-aae2-3b786d7c2d71",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\n\nlet data;\n\ntry {\n  data = JSON.parse(raw);\n} catch (error) {\n  throw new Error(`Invalid JSON from AI Agent: ${raw}`);\n}\n\nreturn [\n  {\n    json: data\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        368
+      ],
+      "id": "083ac6be-f32b-4f64-8518-2600b06908c7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "51074bcf-342a-4235-a762-df8aebf12d61",
+              "leftValue": "={{ $json.booking_ready }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        736
+      ],
+      "id": "e47f3e15-26ee-4d81-aaed-b57cd0cfe486",
+      "name": "If1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Update Lead CRM Record": {
+      "main": [
+        []
+      ]
+    },
+    "Telegram Reply Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Conversation & Booking Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Conversation & Booking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send AI Reply to Lead": {
+      "main": [
+        []
+      ]
+    },
+    "Book Site Visit in Calendar": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Conversation & Booking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send AI Reply to Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Book Site Visit in Calendar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Lead CRM Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "70ba7226-a750-47f7-b1bd-cc58b0bba8ff",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "83f43a99c9c3e9b2096adfb35e310f9c4a05133ed00a1a18cd4dd15f5b7550f4"
+  },
+  "nodeGroups": [],
+  "id": "kHZd7uXbTWuWfwa4",
+  "tags": []
+}

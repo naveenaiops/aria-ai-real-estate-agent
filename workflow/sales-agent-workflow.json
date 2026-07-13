@@ -1,0 +1,1255 @@
+{
+  "name": "24/7 AI Sales Agent for Real Estate",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sales-agent",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "01f9d132-aaff-4d15-b196-2b0415ab0877",
+      "name": "Website Chat Lead Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1488,
+        848
+      ],
+      "webhookId": "03db9c65-4c1f-4366-8435-c4dd867a2bb4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "chat_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.sessionId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        832
+      ],
+      "id": "c881f5cb-9d77-425e-a7f2-8297fc5245b6",
+      "name": "Get Lead Session from Supabase",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get webhook data\nconst webhook = $('Website Chat Lead Trigger').first().json.body;\n\n// Get session from Supabase\nconst rows = $input.all();\n\n// Existing session?\nconst session = rows.length > 0 &&\nrows[0].json.session_id ? rows[0].json : null;\n\n// Existing conversation history\nconst history = session?.history || \"\";\n\n// Existing lead data\nlet leadData = session?.lead_data || {};\n\nif (typeof leadData === \"string\") {\n    leadData = JSON.parse(leadData);\n}\n\nconsole.log(typeof leadData);\nconsole.log(leadData);\n\n// Build prompt for AI\nconst prompt = `Conversation so far:\n\n${history}\n\nLatest visitor message:\n\n${webhook.message}`;\n\nreturn [\n{\njson: {\nsessionId: webhook.sessionId,\nmessage: webhook.message,\nprompt,\nhistory,\nlead_data: leadData,\nisNewSession: session === null\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        848
+      ],
+      "id": "9d0436e6-1066-49b7-956c-3ca14ba3defd",
+      "name": "Build Conversation Context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "You are Aria, the AI Property Consultant for Bluestone Estates.\n\nYour job is to qualify every visitor before recommending properties.\n\nCollect the following information naturally, one or two questions at a time:\n\n- Full Name\n- Phone Number\n- Email (optional)\n- Preferred Location\n- Budget\n- Purchase Timeline\n\nPurchase Timeline must be one of:\n- Immediately\n- Within 3 Months\n- Within 6 Months\n- Just Exploring\n\nRules:\n\n- Never ask everything at once.\n- Always acknowledge what the visitor says.\n- Remember previous conversation.\n- If the visitor gives a short answer, infer it using the conversation context.\n- If discussing budget and they say \"1.25\", interpret it as \"1.25 Cr\".\n- Store every detail inside lead_data.\n- Unknown values must remain null.\n- Only set ready_to_recommend=true when you have:\n  - name\n  - phone\n  - preferred_location\n  - budget\n  - purchase_timeline\n\nWhen ready_to_recommend becomes true:\n- Thank the visitor.\n- Tell them a Bluestone Estates property consultant will contact them shortly.\n- Do not ask more qualifying questions.\n\nReturn ONLY valid JSON.\n\n{\n  \"reply\": \"<message>\",\n  \"lead_data\": {\n    \"name\": null,\n    \"phone\": null,\n    \"email\": null,\n    \"preferred_location\": null,\n    \"budget\": null,\n    \"purchase_timeline\": null\n  },\n  \"ready_to_recommend\": false\n}",
+          "maxIterations": 10
+        }
+      },
+      "id": "736421e8-fbae-4735-8061-3b2d3f17d4ed",
+      "name": "AI Lead Qualification Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -608,
+        800
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        1072
+      ],
+      "id": "82f02e32-34a6-476e-8fd6-b0cf1d94626d",
+      "name": "Qualification LLM",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Sjc37hglmxFQbXum",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $input.first().json.output;\n\n// Remove markdown if AI added it\ntext = text.replace(/```json/g, \"\")\n           .replace(/```/g, \"\")\n           .trim();\n\nconst ai = JSON.parse(text);\n\nconst prev = $('Build Conversation Context').first().json;\n\n// Convert lead_data to object if it's stored as a string\nif (typeof prev.lead_data === 'string') {\n    prev.lead_data = JSON.parse(prev.lead_data);\n}\n\nreturn [{\n  json: {\n    reply: ai.reply,\n    lead_data: {\n      ...prev.lead_data,\n      ...ai.lead_data\n    },\n    ready_to_recommend: ai.ready_to_recommend,\n    sessionId: prev.sessionId,\n    history: prev.history,\n    message: prev.message,\n    isNewSession: prev.isNewSession\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        848
+      ],
+      "id": "cb15c251-b3bc-4492-8a83-fc1b4a36f5b4",
+      "name": "Parse & Merge Lead Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "77d5eae2-c340-4a8f-8f24-498a2c70af1b",
+              "leftValue": "={{ $json.isNewSession }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        864
+      ],
+      "id": "28a88d13-9c47-4eb1-acb6-c59734259020",
+      "name": "Is New Lead Session?"
+    },
+    {
+      "parameters": {
+        "tableId": "chat_sessions",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $json.sessionId }}"
+            },
+            {
+              "fieldId": "history",
+              "fieldValue": "=User: {{$json.message}}\\nAI: {{$json.reply}}"
+            },
+            {
+              "fieldId": "lead_data",
+              "fieldValue": "={{ JSON.stringify($json.lead_data) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        256,
+        672
+      ],
+      "id": "cb95ae75-c8fb-4a98-870d-f80467c510b0",
+      "name": "Create Lead Session",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "chat_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Website Chat Lead Trigger').item.json.body.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "history",
+              "fieldValue": "={{ $('Parse & Merge Lead Data').first().json.history + '\\nUser: ' + $('Parse & Merge Lead Data').first().json.message + '\\nAI: ' + $('Parse & Merge Lead Data').first().json.reply }}"
+            },
+            {
+              "fieldId": "lead_data",
+              "fieldValue": "={{ $('Parse & Merge Lead Data').first().json.lead_data }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1040
+      ],
+      "id": "ff836ccb-b01f-44de-ac1a-d2be0ffd4c1e",
+      "name": "Update Lead Conversation",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      reply: $('Parse & Merge Lead Data').first().json.reply,\n      lead_data: $('Parse & Merge Lead Data').first().json.lead_data,\n      ready_to_recommend: $('Parse & Merge Lead Data').first().json.ready_to_recommend,\n      sessionId: $('Parse & Merge Lead Data').first().json.sessionId\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        864
+      ],
+      "id": "1644c0c5-d1bc-4069-98de-228bd9bdd04e",
+      "name": "Prepare Chat Response"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f246d068-005e-4046-8977-e57da6d4d028",
+      "name": "Return Response to Website",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1008,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9837c2de-b695-4f99-a06f-9324249ee620",
+              "name": "ready_to_recommend",
+              "value": "={{ $json.ready_to_recommend }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        1088
+      ],
+      "id": "f0cc4dcd-9c90-42ea-b4de-1cb8b57ca70a",
+      "name": "Prepare Lead for Scoring"
+    },
+    {
+      "parameters": {
+        "jsCode": "const leadData = $json.lead_data || {};\n\nfunction bareNumberToRupees(n) {\n    if (n >= 100000) return n;\n    if (n < 1000) {\n        return n >= 50 ? n * 100000 : n * 10000000;\n    }\n    return n;\n}\n\nfunction parseBudget(budget) {\n\n    if (!budget) return null;\n\n    if (typeof budget === \"number\") {\n        return bareNumberToRupees(budget);\n    }\n\n    let s = String(budget)\n        .toLowerCase()\n        .replace(/[,₹]/g, \"\")\n        .trim();\n\n    let m;\n\n    if ((m = s.match(/([0-9.]+)\\s*cr/))) {\n        return parseFloat(m[1]) * 10000000;\n    }\n\n    if ((m = s.match(/([0-9.]+)\\s*l/))) {\n        return parseFloat(m[1]) * 100000;\n    }\n\n    const n = parseFloat(s);\n\n    if (isNaN(n)) return null;\n\n    return bareNumberToRupees(n);\n\n}\n\nconst budget = parseBudget(leadData.budget);\n\nlet score = 0;\n\nif (leadData.phone) score += 10;\n\nif (leadData.email) score += 5;\n\nif (leadData.preferred_location) score += 10;\n\nif (budget !== null) {\n\n    if (budget >= 10000000)\n        score += 25;\n\n    else if (budget >= 7500000)\n        score += 20;\n\n    else\n        score += 10;\n\n}\n\nconst timeline = String(\n    leadData.purchase_timeline || \"\"\n).toLowerCase();\n\nif (timeline.includes(\"immediate\"))\n    score += 35;\n\nelse if (timeline.includes(\"3\"))\n    score += 25;\n\nelse if (timeline.includes(\"6\"))\n    score += 15;\n\nelse if (timeline.includes(\"exploring\"))\n    score += 5;\n\nscore = Math.min(score,100);\n\nlet status=\"COLD\";\n\nif(score>=80){\n\n    status=\"HOT\";\n\n}\nelse if(score>=50){\n\n    status=\"WARM\";\n\n}\n\nreturn [{\n    json:{\n        sessionId:$json.sessionId,\n\n        lead_data:leadData,\n\n        lead_score:score,\n\n        lead_status:status,\n\n        qualified:$json.ready_to_recommend,\n\n        reply:$json.reply\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        1088
+      ],
+      "id": "c9a5d03c-fd60-499b-8ec0-80ed9e09d365",
+      "name": "Calculate Lead Score"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "371fb71b-e73c-4564-8a93-cdc70e42c1e2",
+              "leftValue": "={{ $json.qualified }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "9e2eef16-1b4a-4b9d-a11a-43375decaec2",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        992
+      ],
+      "id": "dd6572ff-9c7f-4704-b8c0-0fc8b7316d43",
+      "name": "Is Lead Qualified for Follow-Up?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short, friendly WhatsApp follow-up (maximum 55 words) for a qualified real estate lead.\n\nLead Details:\n- Name: {{ $json.lead_data.name }}\n- Preferred Location: {{ $json.lead_data.preferred_location }}\n- Budget: {{ $json.lead_data.budget }}\n\nInstructions:\n- Thank them for their enquiry.\n- Mention that matching properties have been shortlisted.\n- Invite them for a site visit this week.\n- Ask them to reply \"YES\" to book.\n- Keep it natural and conversational.\n- Do NOT use emojis.\n- Return ONLY the WhatsApp message text.",
+        "options": {
+          "systemMessage": "You are a polite, concise real estate relationship manager for Bluestone Estates.\n\nWrite professional WhatsApp messages that sound human, warm, and helpful. Never sound robotic or overly salesy.\n\nReturn only the message text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1520,
+        944
+      ],
+      "id": "9b5cda10-1d68-4f71-9fc8-35cb7883dabb",
+      "name": "AI Follow-Up Message Generator"
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        1104
+      ],
+      "id": "7860aa2c-0b1c-4d46-8c67-0740420fb858",
+      "name": "Follow-Up LLM",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Sjc37hglmxFQbXum",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1824,
+        1040
+      ],
+      "id": "cd98fee2-7991-4759-9f0d-384137a1a5a7",
+      "name": "Send Initial Telegram Follow-Up",
+      "webhookId": "02de641f-eed1-4b91-89d2-20d67a5fe40c",
+      "credentials": {
+        "telegramApi": {
+          "id": "1GHRAoQNlxin5e18",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        1488
+      ],
+      "id": "524d1f65-95ed-4132-b33c-e79a4009367b",
+      "name": "Telegram Reply Trigger",
+      "webhookId": "d2a5dcb6-11df-49c7-8f05-706b18366402",
+      "credentials": {
+        "telegramApi": {
+          "id": "1GHRAoQNlxin5e18",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A qualified real estate lead has replied on Telegram.\n\nLead Details: {{ $('Is Lead Qualified for Follow-Up?').item.json.lead_data }}\n\n\nLead Score:{{ $('Is Lead Qualified for Follow-Up?').item.json.lead_score }}\n\n\nLead Status:{{ $('Is Lead Qualified for Follow-Up?').item.json.lead_status }}\n\n\nCustomer Message:{{ $json.message.text }}\n\nReply naturally.\n\nIf the customer asks a property question, answer it.\n\nIf they want a site visit, ask for the day or time if missing.\n\nIf both day and time are available, confirm the booking.\n\nReturn a coversational message where there is no messagage or line writtten it is just a message text only not comma or anything user should not get that this is written by ai the output of this should have only text or alpahbets thatvs it \n",
+        "options": {
+          "systemMessage": "You are Aria, the AI Relationship Manager for Bluestone Estates.\n\nYour job is to continue conversations with already qualified property buyers.\n\nNever ask again for:\n- Name\n- Phone\n- Budget\n- Preferred Location\n\nYou already know those details.\n\nYour objective is to move the customer toward booking a site visit.\n\nAlways:\n\n• Reply naturally.\n• Answer real estate questions.\n• Be short and professional.\n• Ask only one question at a time.\n• Update any new information the customer provides.\n• If the customer wants to speak with a human, set handoff=true.\n• If the customer confirms a site visit, collect the preferred day and time.\n• If the customer asks something outside real estate, politely redirect the conversation.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1536,
+        1520
+      ],
+      "id": "1cc59ffa-f6a1-43f9-b735-a6bb847fd714",
+      "name": "AI Lead Conversation & Booking Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        1744
+      ],
+      "id": "277fe58d-dd2d-4d4f-976f-70be6289c598",
+      "name": "Conversation LLM",
+      "credentials": {
+        "openRouterApi": {
+          "id": "Sjc37hglmxFQbXum",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2160,
+        1504
+      ],
+      "id": "eac5b461-537d-487b-aa14-ad563504e8c2",
+      "name": "Send AI Reply to Lead",
+      "webhookId": "04bd4eb7-83b4-48c9-af69-82383366d8ab",
+      "credentials": {
+        "telegramApi": {
+          "id": "1GHRAoQNlxin5e18",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "YOUR_CALENDAR_EMAIL@gmail.com",
+          "mode": "id"
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        2704,
+        1552
+      ],
+      "id": "56f9bfef-335d-4525-a5cf-fc80451266fb",
+      "name": "Book Site Visit in Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "0zR9VspCXtSf7tvL",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "51074bcf-342a-4235-a762-df8aebf12d61",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2416,
+        1568
+      ],
+      "id": "1beb02d8-b84f-49b6-8529-aa18a919bd28",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Real Estate Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SPREADSHEET_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SPREADSHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Calculate Lead Score').item.json.lead_data.name }}",
+            "Phone": "={{ $('Calculate Lead Score').item.json.lead_data.phone }}",
+            "Email": "={{ $('Calculate Lead Score').item.json.lead_data.email }}",
+            "Budget": "={{ $('Calculate Lead Score').item.json.lead_data.budget }}",
+            "Purchase Timeline": "={{ $('Calculate Lead Score').item.json.lead_data.purchase_timeline }}",
+            "Lead Score": "={{ $json.lead_score }}",
+            "Lead Status": "={{ $json.lead_status }}",
+            "Qualified": "={{ $json.qualified }}",
+            "Sales Stage": "={{ $json.sales_stage }}",
+            "Lead ID": "={{ $json.session_id }}",
+            "Preferred Location": "={{ $('Calculate Lead Score').item.json.lead_data.preferred_location }}",
+            "Created At": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": [
+            {
+              "id": "Lead ID",
+              "displayName": "Lead ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Location",
+              "displayName": "Preferred Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Purchase Timeline",
+              "displayName": "Purchase Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Status",
+              "displayName": "Lead Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Qualified",
+              "displayName": "Qualified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sales Stage",
+              "displayName": "Sales Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Property Type",
+              "displayName": "Property Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Bedrooms",
+              "displayName": "Bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Loan Required",
+              "displayName": "Loan Required",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Customer Intent",
+              "displayName": "Customer Intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Site Visit Date",
+              "displayName": "Site Visit Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Site Visit Time",
+              "displayName": "Site Visit Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Appointment Start",
+              "displayName": "Appointment Start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Appointment End",
+              "displayName": "Appointment End",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Calendar Event ID",
+              "displayName": "Calendar Event ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Appointment Status",
+              "displayName": "Appointment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Preferred Contact Time",
+              "displayName": "Preferred Contact Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Scored At",
+              "displayName": "Last Scored At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Contacted At",
+              "displayName": "Last Contacted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Lead Source",
+              "displayName": "Lead Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Assigned To",
+              "displayName": "Assigned To",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Updated At",
+              "displayName": "Updated At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3008,
+        1328
+      ],
+      "id": "9c833d9f-8e50-463b-a06c-f78fed7873a7",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EA3nsIxRdNu3R0pS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "chat_sessions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "={{ $json.lead_score }}"
+            },
+            {
+              "fieldId": "lead_status",
+              "fieldValue": "={{ $json.lead_status }}"
+            },
+            {
+              "fieldId": "qualified",
+              "fieldValue": "={{ $json.qualified }}"
+            },
+            {
+              "fieldId": "sales_stage",
+              "fieldValue": "={{ $json.qualified }}"
+            },
+            {
+              "fieldId": "telegram_chat_id",
+              "fieldValue": "={{ $json.result.chat.id }}"
+            },
+            {
+              "fieldId": "telegram_username",
+              "fieldValue": "={{ $json.result.from.username }}"
+            },
+            {
+              "fieldId": "last_scored_at",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "last_contacted_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        1312
+      ],
+      "id": "51172cc6-c220-46b4-ae71-b56eae653a44",
+      "name": "Update Lead",
+      "credentials": {
+        "supabaseApi": {
+          "id": "MUk3J4AGhtuiNCGw",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Website Chat Lead Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Lead Session from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lead Session from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Build Conversation Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Conversation Context": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Qualification Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Qualification Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse & Merge Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualification LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Qualification Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Merge Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Is New Lead Session?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is New Lead Session?": {
+      "main": [
+        [
+          {
+            "node": "Create Lead Session",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Lead Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead Session": {
+      "main": [
+        [
+          {
+            "node": "Prepare Chat Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead Conversation": {
+      "main": [
+        [
+          {
+            "node": "Prepare Chat Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Chat Response": {
+      "main": [
+        [
+          {
+            "node": "Return Response to Website",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Lead for Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Response to Website": {
+      "main": [
+        []
+      ]
+    },
+    "Prepare Lead for Scoring": {
+      "main": [
+        [
+          {
+            "node": "Calculate Lead Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Lead Score": {
+      "main": [
+        [
+          {
+            "node": "Is Lead Qualified for Follow-Up?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Lead Qualified for Follow-Up?": {
+      "main": [
+        [
+          {
+            "node": "AI Follow-Up Message Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Follow-Up Message Generator": {
+      "main": [
+        [
+          {
+            "node": "Send Initial Telegram Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-Up LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Follow-Up Message Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Initial Telegram Follow-Up": {
+      "main": [
+        [
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Lead Conversation & Booking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Reply Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Lead Conversation & Booking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Lead Conversation & Booking Agent": {
+      "main": [
+        [
+          {
+            "node": "Send AI Reply to Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Lead Conversation & Booking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send AI Reply to Lead": {
+      "main": [
+        [
+          {
+            "node": "Update Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Site Visit in Calendar": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Book Site Visit in Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Update Lead": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "f588c096-2814-4902-8e92-bba4db801bbb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "83f43a99c9c3e9b2096adfb35e310f9c4a05133ed00a1a18cd4dd15f5b7550f4"
+  },
+  "nodeGroups": [],
+  "id": "BerZSh9zcF0LmoFS",
+  "tags": []
+}
