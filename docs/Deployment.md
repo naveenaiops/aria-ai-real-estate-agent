@@ -8,12 +8,12 @@ Deploying Aria AI into a production environment requires configuring secure webh
 
 ```mermaid
 graph TD
-    subgraph Self-Hosted (Developer Choice)
+    subgraph self_hosted["Self-Hosted (Developer Choice)"]
         Docker[Docker Compose VPS] --> n8nSelf[n8n Self-Hosted]
         Docker --> PostgresSelf[PostgreSQL DB]
     end
 
-    subgraph Managed Cloud (Enterprise Scale)
+    subgraph managed_cloud["Managed Cloud (Enterprise Scale)"]
         Cloudn8n[n8n Cloud] --> WebhookG
         SupaCloud[Supabase Cloud] --> PostgresManaged[Managed PostgreSQL]
     end

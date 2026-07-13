@@ -44,23 +44,23 @@ Aria's decoupled, event-driven topology is orchestrated around an API gateway, s
 
 ```mermaid
 graph TB
-    subgraph Client UI Tier
+    subgraph client_tier["Client UI Tier"]
         Widget[Custom Website Chat Widget]
         Telegram[Telegram Bot Client]
     end
 
-    subgraph Integration & Routing Tier (n8n API Gateway)
+    subgraph integration_tier["Integration & Routing Tier (n8n API Gateway)"]
         Webhook[Sales Agent Webhook]
         TGTrigger[Telegram Bot Trigger]
         Scoring[JS Lead Scoring Node]
         ParseRecovery[JS JSON Parse Recovery]
     end
 
-    subgraph Cognitive Intelligence Tier
+    subgraph cognitive_tier["Cognitive Intelligence Tier"]
         LLM[DeepSeek-v4-Flash via OpenRouter]
     end
 
-    subgraph Data & Workspace Tier
+    subgraph data_tier["Data & Workspace Tier"]
         DB[(Supabase DB: chat_sessions)]
         Sheets[Google Sheets CRM Sync]
         Calendar[Google Calendar Scheduler]

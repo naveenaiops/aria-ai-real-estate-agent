@@ -10,27 +10,27 @@ Aria AI uses **n8n** as a lightweight, low-code integration router, **Supabase (
 
 ```mermaid
 graph TB
-    subgraph Client Tier
+    subgraph client_tier["Client Tier"]
         Widget[Custom Website Chat Widget]
         Telegram[Telegram App client]
     end
 
-    subgraph Orchestration Tier (n8n API Gateway)
+    subgraph orchestration_tier["Orchestration Tier (n8n API Gateway)"]
         Webhook[Sales Agent Webhook Gateway]
         TGTrigger[Telegram Bot Message Trigger]
         Scoring[JS Lead Scoring Engine]
         ParseRecovery[JS JSON Parse Recovery]
     end
 
-    subgraph Cognitive Tier
+    subgraph cognitive_tier["Cognitive Tier"]
         LLM[DeepSeek-v4-Flash via OpenRouter]
     end
 
-    subgraph Data Tier (Supabase Real-Time DB)
+    subgraph data_tier["Data Tier (Supabase Real-Time DB)"]
         DB[(PostgreSQL Table: chat_sessions)]
     end
 
-    subgraph External CRM & Workspace Connectors
+    subgraph external_tier["External CRM & Workspace Connectors"]
         Sheets[Google Sheets CRM Sync]
         Calendar[Google Calendar Scheduler]
     end
